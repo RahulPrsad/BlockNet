@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Web Content Filter</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      width: 380px;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0f1117;
+      color: #e4e4e7;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #1e3a5f 0%, #0f1117 100%);
+      padding: 20px;
+      text-align: center;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .header h1 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #38bdf8;
+      letter-spacing: 0.5px;
+    }
+
+    .header p {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      background: #1a1d27;
+      border-bottom: 1px solid #1e293b;
+      font-size: 12px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      display: inline-block;
+      margin-right: 6px;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .status-dot.inactive { background: #ef4444; animation: none; }
+
+    .section {
+      padding: 16px 20px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #64748b;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .category-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .category-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: #1a1d27;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .category-item:hover {
+      border-color: #38bdf8;
+      background: #1e2130;
+    }
+
+    .category-item.active {
+      border-color: #38bdf8;
+      background: rgba(56, 189, 248, 0.08);
+    }
+
+    .category-item input[type="checkbox"] {
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #334155;
+      border-radius: 4px;
+      cursor: pointer;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .category-item input[type="checkbox"]:checked {
+      background: #38bdf8;
+      border-color: #38bdf8;
+    }
+
+    .category-item input[type="checkbox"]:checked::after {
+      content: '✓';
+      position: absolute;
+      top: -2px;
+      left: 2px;
+      font-size: 12px;
+      color: #0f1117;
+      font-weight: 700;
+    }
+
+    .category-icon { font-size: 16px; }
+
+    .category-label {
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .actions {
+      padding: 12px 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.3px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+      color: #0f1117;
+    }
+
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    .btn-danger {
+      background: transparent;
+      color: #ef4444;
+      border: 1px solid #ef4444;
+    }
+
+    .btn-danger:hover { background: rgba(239, 68, 68, 0.1); }
+
+    .btn-secondary {
+      background: transparent;
+      color: #38bdf8;
+      border: 1px solid #1e293b;
+    }
+
+    .btn-secondary:hover { background: #1a1d27; }
+
+    .custom-domains {
+      padding: 0 20px 16px;
+    }
+
+    .custom-input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .custom-input-row input {
+      flex: 1;
+      padding: 8px 12px;
+      background: #1a1d27;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      color: #e4e4e7;
+      font-size: 12px;
+      outline: none;
+    }
+
+    .custom-input-row input:focus { border-color: #38bdf8; }
+
+    .custom-input-row button {
+      padding: 8px 14px;
+      background: #38bdf8;
+      color: #0f1117;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .custom-list {
+      margin-top: 8px;
+      max-height: 80px;
+      overflow-y: auto;
+    }
+
+    .custom-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      background: #1e293b;
+      border-radius: 4px;
+      font-size: 11px;
+      margin: 2px;
+    }
+
+    .custom-tag .remove {
+      cursor: pointer;
+      color: #ef4444;
+      font-weight: 700;
+    }
+
+    .stats-bar {
+      display: flex;
+      justify-content: space-around;
+      padding: 12px 20px;
+      background: #1a1d27;
+      border-top: 1px solid #1e293b;
+      font-size: 11px;
+      color: #64748b;
+    }
+
+    .stat-item { text-align: center; }
+    .stat-value { font-size: 18px; font-weight: 700; color: #38bdf8; }
+
+    /* Focus mode */
+    .focus-section {
+      padding: 0 20px 16px;
+    }
+
+    .focus-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .focus-row select, .focus-row button {
+      padding: 8px 12px;
+      background: #1a1d27;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      color: #e4e4e7;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .focus-row button {
+      background: #f59e0b;
+      color: #0f1117;
+      font-weight: 600;
+      border: none;
+    }
+
+    .focus-active {
+      padding: 8px 12px;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid #f59e0b;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #f59e0b;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .mode-toggle {
+      display: flex;
+      gap: 4px;
+      padding: 12px 20px 4px;
+    }
+
+    .mode-btn {
+      flex: 1;
+      padding: 6px;
+      background: transparent;
+      border: 1px solid #1e293b;
+      border-radius: 6px;
+      color: #64748b;
+      font-size: 11px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .mode-btn.active {
+      background: #38bdf8;
+      color: #0f1117;
+      border-color: #38bdf8;
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .log-list {
+      padding: 0 20px 16px;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    .log-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid #1e293b;
+      font-size: 11px;
+    }
+
+    .log-domain { color: #ef4444; font-weight: 600; }
+    .log-time { color: #64748b; }
+
+    .backend-section {
+      padding: 0 20px 16px;
+    }
+
+    .backend-status {
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .backend-status.connected {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid #22c55e;
+      color: #22c55e;
+    }
+
+    .backend-status.disconnected {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid #ef4444;
+      color: #ef4444;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🛡️ SMART WEB CONTENT FILTER</h1>
+    <p>Network-Level Content Filtering System</p>
+  </div>
+
+  <div class="status-bar">
+    <span><span class="status-dot" id="statusDot"></span> <span id="statusText">Protection Active</span></span>
+    <span id="blockedCount">0 sites blocked</span>
+  </div>
+
+  <!-- Mode Toggle -->
+  <div class="mode-toggle">
+    <button class="mode-btn active" data-tab="filter">🛡️ Filter</button>
+    <button class="mode-btn" data-tab="system">💻 System</button>
+    <button class="mode-btn" data-tab="logs">📋 Logs</button>
+  </div>
+
+  <!-- FILTER TAB -->
+  <div class="tab-content active" id="tab-filter">
+    <div class="section">
+      <div class="section-title">Block Categories</div>
+      <div class="category-grid" id="categoryGrid"></div>
+    </div>
+
+    <div class="custom-domains">
+      <div class="section-title">Custom Domains</div>
+      <div class="custom-input-row">
+        <input type="text" id="customDomainInput" placeholder="e.g. example.com" />
+        <button id="addCustomBtn">+ Add</button>
+      </div>
+      <div class="custom-list" id="customList"></div>
+    </div>
+
+    <!-- Focus Mode -->
+    <div class="focus-section">
+      <div class="section-title">⏱️ Focus Mode</div>
+      <div id="focusControls">
+        <div class="focus-row">
+          <select id="focusDuration">
+            <option value="15">15 min</option>
+            <option value="30">30 min</option>
+            <option value="60">1 hour</option>
+            <option value="120">2 hours</option>
+          </select>
+          <button id="startFocusBtn">Start Focus</button>
+        </div>
+      </div>
+      <div id="focusActive" class="focus-active" style="display:none;"></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="saveBtn">💾 Apply & Save Rules</button>
+      <button class="btn btn-danger" id="resetBtn">🗑️ Unblock All</button>
+    </div>
+  </div>
+
+  <!-- SYSTEM-WIDE TAB -->
+  <div class="tab-content" id="tab-system">
+    <div class="section">
+      <div class="section-title">System-Wide Blocking (via Backend)</div>
+      <p style="font-size:12px; color:#94a3b8; margin-bottom:12px;">
+        Connect to the local Node.js backend to block sites at the OS level 
+        (hosts file) across <strong>all browsers</strong>.
+      </p>
+    </div>
+
+    <div class="backend-section">
+      <div class="backend-status disconnected" id="backendStatus">
+        ⚠️ Backend Not Connected
+      </div>
+      <button class="btn btn-secondary" id="checkBackendBtn">🔄 Check Backend Connection</button>
+      <div style="height:8px;"></div>
+      <button class="btn btn-primary" id="syncBackendBtn">📡 Sync Rules to Backend</button>
+      <div style="height:8px;"></div>
+      <button class="btn btn-danger" id="resetBackendBtn">🗑️ Reset System Hosts File</button>
+    </div>
+  </div>
+
+  <!-- LOGS TAB -->
+  <div class="tab-content" id="tab-logs">
+    <div class="section">
+      <div class="section-title">Blocked Site Logs</div>
+    </div>
+    <div class="log-list" id="logList">
+      <p style="font-size:12px; color:#64748b; text-align:center;">No blocked sites yet</p>
+    </div>
+    <div class="actions">
+      <button class="btn btn-secondary" id="clearLogsBtn">Clear Logs</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-value" id="statCategories">0</div>
+      <div>Categories</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" id="statDomains">0</div>
+      <div>Domains</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" id="statBlocked">0</div>
+      <div>Blocked Today</div>
+    </div>
+  </div>
+
+  <script src="rules.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
