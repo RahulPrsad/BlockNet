@@ -1,4 +1,4 @@
-# 🛡️ Smart Network-Level Web Content Filter
+#  Smart Network-Level Web Content Filter
 
 A **Fortinet-style** web content filtering system that blocks websites at **two levels**:
 
@@ -7,7 +7,7 @@ A **Fortinet-style** web content filtering system that blocks websites at **two 
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 smart-web-filter/
@@ -17,22 +17,22 @@ smart-web-filter/
 │   ├── popup.js            # Popup logic & backend sync
 │   ├── background.js       # Service worker (declarativeNetRequest)
 │   ├── block.html          # Blocked page shown to users
-│   ├── rules.js            # Category-to-domain mapping
-│   └── icons/              # Extension icons
+│   ├── rules.js             # Category-to-domain mapping
+│   └── icons/               # Extension icons
 │
 ├── backend/                # Node.js Backend Server
 │   ├── server.js           # Express server (port 5000)
-│   ├── blocker.js          # Hosts file modifier
-│   ├── reset.js            # Hosts file restorer
-│   ├── rules.js            # Category rules (shared)
-│   └── package.json        # Backend dependencies
+│   ├── blocker.js           # Hosts file modifier
+│   ├── reset.js              # Hosts file restorer
+│   ├── rules.js              # Category rules (shared)
+│   └── package.json         # Backend dependencies
 │
 └── README.md               # This file
 ```
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Install the Chrome Extension
 
@@ -58,12 +58,12 @@ node server.js
 sudo node server.js
 ```
 
-3. In the extension, go to the **💻 System** tab → Click **Check Backend Connection**
+3. In the extension, go to the **System** tab → Click **Check Backend Connection**
 4. Click **📡 Sync Rules to Backend** to block sites system-wide
 
 ---
 
-## ⚙️ How It Works
+##  How It Works
 
 ### Layer 1: Browser Extension (declarativeNetRequest)
 - Blocks sites **before** the browser makes a network request
@@ -89,23 +89,57 @@ sudo node server.js
 
 ---
 
-## 🧠 Key Computer Networks Concepts
+## Request Flow (Flowchart)
 
-1. **DNS Resolution** — The hosts file overrides DNS lookups, redirecting domains before any DNS query leaves the machine.
+The diagram below shows what happens when a user tries to visit a website, from the moment a URL is entered to the point it's either blocked or allowed through, across both filtering layers.
 
-2. **Loopback Address (127.0.0.1)** — Redirecting to localhost effectively "black-holes" the request.
+```mermaid
+flowchart TD
+    A([User enters a URL / clicks a link]) --> B{Browser Extension\nActive?}
 
-3. **Application Layer Filtering** — The extension filters at Layer 7 (HTTP/HTTPS), similar to how enterprise firewalls inspect web traffic.
+    B -- No --> H{Hosts File\nEntry Exists?}
+    B -- Yes --> C{declarativeNetRequest:\nDomain matches a\nblocked category?}
 
-4. **Network Layer Filtering** — Hosts file blocking works at Layer 3/4, intercepting before TCP connections are established.
+    C -- Yes --> D[Redirect to block.html\n'Blocked Page' shown]
+    C -- No --> H
 
-5. **Defense in Depth** — Using both extension AND hosts file provides layered security, similar to enterprise network architectures.
+    H -- Yes\n(domain → 127.0.0.1) --> E[DNS resolves to localhost\nConnection fails / black-holed]
+    H -- No --> F[DNS resolves normally]
 
-6. **Rule-Based Access Control** — Categories act like firewall rule sets / ACLs (Access Control Lists).
+    F --> G([Website loads normally])
+    D --> Z([Request stopped])
+    E --> Z
+
+    subgraph L1 [" Layer 1: Browser Level "]
+        B
+        C
+        D
+    end
+
+    subgraph L2 [" Layer 2: System Level (Hosts File) "]
+        H
+        E
+        F
+    end
+
+    classDef blocked fill:#ffdddd,stroke:#cc0000,stroke-width:1px;
+    classDef allowed fill:#ddffdd,stroke:#009900,stroke-width:1px;
+    class D,E,Z blocked;
+    class F,G allowed;
+```
+
+**Reading the flow:**
+1. A request first hits the **Chrome extension** (Layer 1) if it's installed and active.
+2. If the extension blocks the category, the user immediately sees the custom blocked page — no network request is ever sent.
+3. If the extension allows it (or isn't installed), the request proceeds to **DNS resolution**, where the **hosts file** (Layer 2) is checked.
+4. If the domain has been redirected to `127.0.0.1`, the connection is black-holed and fails silently.
+5. If neither layer blocks it, the site loads normally.
+
+This mirrors **defense in depth**: even if one layer is bypassed (e.g., extension disabled, or a browser other than the one it's installed in), the other layer can still catch the request.
 
 ---
 
-## 📋 API Endpoints
+## API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -116,7 +150,7 @@ sudo node server.js
 
 ---
 
-## 🔧 Features
+## Features
 
 - ✅ 8 pre-built categories (Games, Adult, Social, Stocks, Streaming, News, Shopping, Gambling)
 - ✅ Custom domain blocking
@@ -129,7 +163,7 @@ sudo node server.js
 
 ---
 
-## ⚠️ Important Notes
+## Important Notes
 
 - **Administrator privileges required** for hosts file modification
 - Hosts file changes may require a **DNS cache flush**:
@@ -140,7 +174,3 @@ sudo node server.js
 - The backend adds system-wide blocking across all browsers
 
 ---
-
-## 📜 License
-
-MIT — Free to use and modify.
