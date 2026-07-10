@@ -95,37 +95,14 @@ The diagram below shows what happens when a user tries to visit a website, from 
 
 ```mermaid
 flowchart TD
-    A([User enters a URL / clicks a link]) --> B{Browser Extension\nActive?}
-
-    B -- No --> H{Hosts File\nEntry Exists?}
-    B -- Yes --> C{declarativeNetRequest:\nDomain matches a\nblocked category?}
-
-    C -- Yes --> D[Redirect to block.html\n'Blocked Page' shown]
-    C -- No --> H
-
-    H -- Yes\n(domain → 127.0.0.1) --> E[DNS resolves to localhost\nConnection fails / black-holed]
+    A[User enters a URL] --> B{Extension active and blocks domain?}
+    B -- Yes --> D[Show blocked page]
+    B -- No --> H{Domain in hosts file?}
+    H -- Yes --> E[Redirect to 127.0.0.1 - connection fails]
     H -- No --> F[DNS resolves normally]
-
-    F --> G([Website loads normally])
-    D --> Z([Request stopped])
+    F --> G[Website loads]
+    D --> Z[Request stopped]
     E --> Z
-
-    subgraph L1 [" Layer 1: Browser Level "]
-        B
-        C
-        D
-    end
-
-    subgraph L2 [" Layer 2: System Level (Hosts File) "]
-        H
-        E
-        F
-    end
-
-    classDef blocked fill:#ffdddd,stroke:#cc0000,stroke-width:1px;
-    classDef allowed fill:#ddffdd,stroke:#009900,stroke-width:1px;
-    class D,E,Z blocked;
-    class F,G allowed;
 ```
 
 **Reading the flow:**
